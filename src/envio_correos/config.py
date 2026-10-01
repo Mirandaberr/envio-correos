@@ -46,6 +46,9 @@ MEI_ORPHAN_MAX_AGE_S = 24 * 3600
 
 # --- UI ---
 EVENT_POLL_MS = 100
+# Recolección de basura solo desde el hilo de la GUI (ver gui/app.py): 1 vez por segundo,
+# ~5 ms con 5.000 filas cargadas (medido 2026-10-01).
+GC_INTERVAL_MS = 1000
 SEARCH_DEBOUNCE_MS = 200
 
 # --- Columnas que agrega la app al Excel de fallidos (contracts/failed-report-xlsx.md) ---

@@ -7,6 +7,7 @@ tocan widgets; publican eventos en `self.events` y la ventana los drena cada EVE
 
 from __future__ import annotations
 
+import gc
 import logging
 import queue
 import threading
@@ -75,6 +76,9 @@ class App(ctk.CTk):
         self.bind("<Return>", self._on_return)
         self.show_current()
         self.after(config.EVENT_POLL_MS, self._drain_events)
+        self._gc_was_enabled = gc.isenabled()
+        gc.disable()
+        self.after(config.GC_INTERVAL_MS, self._collect_garbage)
 
     # --- Estructura ---
 
@@ -203,6 +207,26 @@ class App(ctk.CTk):
             pass
         finally:
             self.after(config.EVENT_POLL_MS, self._drain_events)
+
+    # --- Recolección de basura en el hilo de la GUI ---
+    #
+    # Tk no es thread-safe. Si el recolector automático de Python se dispara en un hilo de
+    # trabajo (motor de envío, lectura de Excel) y libera un objeto de Tk que quedó en un ciclo
+    # de referencias (p. ej. una tkinter.font.Font de un widget destruido), su __del__ llama a
+    # Tcl desde ese hilo y queda bloqueado. Se observó en CI de macOS: un envío trabado justo
+    # después de iniciar sesión y una lectura de Excel trabada en font.__del__.
+    # Por eso, mientras la ventana existe, el recolector automático se desactiva y se ejecuta
+    # periódicamente acá, en el hilo de Tk. El conteo de referencias sigue liberando al
+    # instante todo lo que no forma ciclos; solo los ciclos esperan hasta GC_INTERVAL_MS.
+
+    def _collect_garbage(self) -> None:
+        gc.collect()
+        self.after(config.GC_INTERVAL_MS, self._collect_garbage)
+
+    def destroy(self) -> None:
+        super().destroy()
+        if self._gc_was_enabled:
+            gc.enable()
 
     # --- Diálogos ---
 
