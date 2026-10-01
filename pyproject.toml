@@ -25,6 +25,7 @@ dev = [
     "psutil>=7",
     "ruff>=0.13",
     "pyinstaller==6.22.3",
+    "pytest-timeout>=2",
 ]
 
 [build-system]
@@ -37,6 +38,9 @@ packages = ["src/envio_correos"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+# Un test colgado (p. ej. de GUI en un runner sin foco) falla con su traza en vez de bloquear.
+timeout = 180
+timeout_method = "thread"
 filterwarnings = [
     "ignore:Session.login_data is deprecated:DeprecationWarning",
 ]

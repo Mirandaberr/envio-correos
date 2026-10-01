@@ -11,6 +11,10 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    # Windows es la plataforma de destino; macOS es solo referencia de desarrollo y su
+    # resultado no bloquea la publicación del ejecutable.
+    continue-on-error: ${{ matrix.os == 'macos-latest' }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0
@@ -24,6 +28,9 @@ jobs:
   build:
     needs: test
     runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write  # solo para publicar el Release al subir una etiqueta v*
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0
@@ -38,3 +45,17 @@ jobs:
         with:
           name: EnvioCorreos-windows
           path: dist/EnvioCorreos.exe
+      - name: Publicar Release (solo con etiqueta v*; con guion = pre-release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          flags=()
+          [[ "$TAG" == *-* ]] && flags+=(--prerelease)
+          sed "s#{{REPO}}#${GITHUB_REPOSITORY}#g" packaging/release-notes.md > notes.md
+          gh release create "$TAG" dist/EnvioCorreos.exe \
+            --title "Envío de correos $TAG" \
+            --notes-file notes.md \
+            "${flags[@]}"
