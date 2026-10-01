@@ -1,0 +1,40 @@
+name: build-windows
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Instalar dependencias
+        run: uv sync
+      - name: Lint
+        run: uv run ruff check
+      - name: Tests (incluye lentos y de GUI)
+        run: uv run pytest --cov=envio_correos --cov-branch
+
+  build:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Instalar dependencias
+        run: uv sync
+      - name: Construir ejecutable (onefile)
+        run: uv run pyinstaller packaging/envio_correos.spec --noconfirm --clean
+      - name: Smoke test del ejecutable (quickstart P1)
+        run: uv run python packaging/smoke_test.py dist/EnvioCorreos.exe
+      - name: Publicar artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: EnvioCorreos-windows
+          path: dist/EnvioCorreos.exe
