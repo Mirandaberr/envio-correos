@@ -31,9 +31,9 @@ def test_tamano_legible():
 
 def test_bytes_se_leen_una_vez_por_intento(tmp_path):
     f = tmp_path / "nota.txt"
-    f.write_text("versión 1")
+    f.write_text("versión 1", encoding="utf-8")
     loaded = attachments.load_for_attempt([attachments.make_ref(f)])
-    f.write_text("versión 2 modificada")  # cambia en disco a mitad de la campaña
+    f.write_text("versión 2 modificada", encoding="utf-8")  # cambia en disco a mitad de la campaña
     assert loaded[0].data == "versión 1".encode()
     assert (loaded[0].filename, loaded[0].maintype, loaded[0].subtype) == (
         "nota.txt",

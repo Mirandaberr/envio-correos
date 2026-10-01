@@ -31,6 +31,23 @@ log = logging.getLogger(__name__)
 
 DEV_USER = "yo@empresa.com"
 DEV_PASSWORD = "clave-de-prueba"
+# aiosmtpd espera 5 s por defecto a que el servidor responda; en runners de CI lentos (macOS)
+# no alcanza. Solo afecta al arranque del servidor de pruebas.
+READY_TIMEOUT_S = 30.0
+
+_CA_LOCK = threading.Lock()
+_CA: tuple[trustme.CA, trustme.LeafCert] | None = None
+
+
+def _shared_ca(host: str) -> tuple[trustme.CA, trustme.LeafCert]:
+    """Una CA y un certificado de servidor por proceso: generar claves RSA por cada test es
+    costoso en CPU y hacía que el arranque superara el timeout en CI."""
+    global _CA
+    with _CA_LOCK:
+        if _CA is None:
+            ca = trustme.CA()
+            _CA = (ca, ca.issue_cert(host, "localhost"))
+        return _CA
 
 
 @dataclass
@@ -120,12 +137,12 @@ class FakeSmtpServer:
             authenticator=self._authenticate,
             auth_require_tls=offer_starttls,
             data_size_limit=config.MAX_MESSAGE_BYTES * 2,
+            ready_timeout=READY_TIMEOUT_S,
         )
 
     def _make_tls_context(self) -> ssl.SSLContext:
-        ca = trustme.CA()
+        ca, server_cert = _shared_ca(self.host)
         ca.cert_pem.write_to_path(str(self.ca_file))
-        server_cert = ca.issue_cert(self.host, "localhost")
         ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         server_cert.configure_cert(ctx)
         return ctx

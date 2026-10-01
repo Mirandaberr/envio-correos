@@ -21,7 +21,9 @@ def test_core_no_importa_gui():
     files = list(CORE.rglob("*.py"))
     assert files, "no se encontró el núcleo"
     offenders = {
-        str(f.relative_to(CORE)): sorted(_imported_roots(ast.parse(f.read_text())) & FORBIDDEN)
+        str(f.relative_to(CORE)): sorted(
+            _imported_roots(ast.parse(f.read_text(encoding="utf-8"))) & FORBIDDEN
+        )
         for f in files
     }
     assert {k: v for k, v in offenders.items() if v} == {}

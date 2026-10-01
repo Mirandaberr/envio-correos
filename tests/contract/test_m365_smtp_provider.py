@@ -15,7 +15,6 @@ from envio_correos.core.providers.base import (
 from envio_correos.core.providers.base import FailureKind as K
 from envio_correos.core.providers.base import ReasonCode as R
 from envio_correos.core.providers.m365_smtp import M365SmtpPasswordProvider
-from envio_correos.devtools.fake_smtp import FakeSmtpServer
 from tests.smtp_fixtures import endpoint_for
 
 PASSWORD = "clave-de-prueba"
@@ -58,10 +57,13 @@ def test_sin_starttls_no_envia_credenciales(smtp_server_sin_tls):
 
 
 def test_certificado_no_confiable_falla_tls(smtp_server, tmp_path):
-    with FakeSmtpServer(tmp_path / "otra-ca") as otro:
-        ep = SmtpEndpoint(smtp_server.host, smtp_server.port, otro.ca_file)
-        p = M365SmtpPasswordProvider(smtp_server.username, PASSWORD, endpoint=ep)
-        r = p.test_connection()
+    import trustme
+
+    otra_ca = tmp_path / "otra-ca.pem"
+    trustme.CA().cert_pem.write_to_path(str(otra_ca))  # CA que no firmó el certificado
+    ep = SmtpEndpoint(smtp_server.host, smtp_server.port, otra_ca)
+    p = M365SmtpPasswordProvider(smtp_server.username, PASSWORD, endpoint=ep)
+    r = p.test_connection()
     assert r.failure.code is R.TLS_UNAVAILABLE
     assert smtp_server.auth_attempts == 0
 

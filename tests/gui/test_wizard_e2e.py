@@ -322,7 +322,7 @@ def test_variables_adjuntos_vista_previa_y_prueba(env, tmp_path):
 
     srv, journal, lista = env
     adj = tmp_path / "folleto.txt"
-    adj.write_text("contenido del folleto")
+    adj.write_text("contenido del folleto", encoding="utf-8")
     app = main_window.build(journal)
     log = {}
     app.confirm = lambda m: True
