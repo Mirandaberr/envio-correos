@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import re
 import smtplib
+import socket
 import ssl
 from email.message import EmailMessage
 from email.utils import formataddr, formatdate, make_msgid
@@ -32,6 +34,20 @@ log = logging.getLogger(__name__)
 
 PROVIDER_ID = "m365-smtp-password"
 _TLS_FAILURE = Failure(FailureKind.ACCOUNT, ReasonCode.TLS_UNAVAILABLE)
+
+
+_EHLO_SAFE_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,252}[A-Za-z0-9])?$")
+
+
+def ehlo_name() -> str:
+    """Nombre para el saludo EHLO sin consultar DNS.
+
+    Si no se indica, smtplib llama a socket.getfqdn() (DNS inverso) en cada conexión; en redes
+    mal configuradas eso demora o se cuelga (se observó en el runner de macOS de GitHub).
+    `gethostname()` es local. [NO VERIFICADO] que Exchange Online acepte un nombre sin dominio:
+    se confirma en quickstart Q1."""
+    name = socket.gethostname()
+    return name if _EHLO_SAFE_RE.match(name) else "localhost"
 
 
 class M365SmtpPasswordProvider:
@@ -79,7 +95,7 @@ class M365SmtpPasswordProvider:
     def _connect(self) -> smtplib.SMTP:
         ep = self._endpoint
         try:
-            smtp = smtplib.SMTP(ep.host, ep.port, timeout=self._timeout)
+            smtp = smtplib.SMTP(ep.host, ep.port, local_hostname=ehlo_name(), timeout=self._timeout)
             smtp.ehlo()
         except (OSError, smtplib.SMTPException) as exc:
             log.warning("No se pudo conectar al servidor de correo: %s", type(exc).__name__)

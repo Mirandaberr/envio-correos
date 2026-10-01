@@ -155,3 +155,25 @@ def test_cerrar_es_idempotente(smtp_server):
     p.open()
     p.close()
     p.close()
+
+
+def test_no_consulta_dns_inverso_al_conectar(smtp_server, monkeypatch):
+    """smtplib usa socket.getfqdn() si no se le da local_hostname; eso puede colgarse."""
+    import socket
+
+    def no_dns(*a, **k):
+        raise AssertionError("se llamó a socket.getfqdn()")
+
+    monkeypatch.setattr(socket, "getfqdn", no_dns)
+    assert provider(smtp_server).test_connection().ok
+
+
+def test_nombre_ehlo_valido(monkeypatch):
+    import socket
+
+    from envio_correos.core.providers import m365_smtp
+
+    monkeypatch.setattr(socket, "gethostname", lambda: "PC-DE-ANA")
+    assert m365_smtp.ehlo_name() == "PC-DE-ANA"
+    monkeypatch.setattr(socket, "gethostname", lambda: "nombre con espacios")
+    assert m365_smtp.ehlo_name() == "localhost"

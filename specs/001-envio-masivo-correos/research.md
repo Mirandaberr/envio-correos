@@ -36,6 +36,11 @@ contraseña de aplicación), detrás de la interfaz `SendProvider` (ver
   Son respuestas de comunidad, no documentación oficial. **Se confirma** en la prueba con la cuenta
   real del cliente (quickstart, escenario Q1).
 
+- `[NO VERIFICADO]` Nombre del saludo EHLO: el cliente usa `socket.gethostname()` (sin dominio)
+  en lugar de `socket.getfqdn()`, que hace DNS inverso y se colgaba en el runner de macOS de
+  GitHub (diagnóstico 2026-10-01). Que Exchange Online acepte un nombre sin dominio se confirma
+  en quickstart Q1.
+
 **Rationale**: decisión del cliente (2026-09-30), aceptando el riesgo R-1 de la spec.
 
 **Alternatives considered**:
