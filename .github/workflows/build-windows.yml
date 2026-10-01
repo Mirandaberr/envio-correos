@@ -25,11 +25,9 @@ jobs:
         run: uv run pytest tests/gui --reruns 2 --only-rerun "Can't find a usable init.tcl"
 
   test-macos:
-    # Referencia de desarrollo; no bloquea la publicación. Pendiente: en este runner el
-    # servidor SMTP de prueba no recibe conexiones (localmente en macOS sí funciona).
+    # Entorno de desarrollo: se valida, pero no bloquea la publicación del ejecutable.
     runs-on: macos-latest
-    timeout-minutes: 40
-    continue-on-error: true
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0

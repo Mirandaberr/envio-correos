@@ -31,9 +31,9 @@ log = logging.getLogger(__name__)
 
 DEV_USER = "yo@empresa.com"
 DEV_PASSWORD = "clave-de-prueba"
-# aiosmtpd espera 5 s por defecto a que el servidor responda; en runners de CI lentos (macOS)
-# no alcanza. Solo afecta al arranque del servidor de pruebas.
-READY_TIMEOUT_S = 30.0
+# Margen sobre los 5 s por defecto de aiosmtpd para runners de CI cargados.
+READY_TIMEOUT_S = 15.0
+SERVER_HOSTNAME = "localhost"
 
 _CA_LOCK = threading.Lock()
 _CA: tuple[trustme.CA, trustme.LeafCert] | None = None
@@ -138,6 +138,9 @@ class FakeSmtpServer:
             auth_require_tls=offer_starttls,
             data_size_limit=config.MAX_MESSAGE_BYTES * 2,
             ready_timeout=READY_TIMEOUT_S,
+            # Sin nombre fijo, aiosmtpd llama a socket.getfqdn() (DNS inverso) en cada sesión,
+            # y en el runner de macOS de GitHub esa consulta se cuelga (diagnóstico 2026-10-01).
+            server_hostname=SERVER_HOSTNAME,
         )
 
     def _make_tls_context(self) -> ssl.SSLContext:
