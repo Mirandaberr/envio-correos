@@ -5,16 +5,10 @@ on:
   pull_request:
 
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  test-windows:
+    # Plataforma de destino: estos tests bloquean la publicación del ejecutable.
+    runs-on: windows-latest
     timeout-minutes: 30
-    # Windows es la plataforma de destino; macOS es solo referencia de desarrollo y su
-    # resultado no bloquea la publicación del ejecutable.
-    continue-on-error: ${{ matrix.os == 'macos-latest' }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0
@@ -22,11 +16,30 @@ jobs:
         run: uv sync
       - name: Lint
         run: uv run ruff check
-      - name: Tests (incluye lentos y de GUI)
-        run: uv run pytest --cov=envio_correos --cov-branch
+      - name: Tests sin GUI
+        run: uv run pytest --ignore=tests/gui --cov=envio_correos --cov-branch
+      - name: Tests de GUI
+        # En los runners de Windows, Tcl falla a veces de forma intermitente al leer su
+        # init.tcl ("couldn't read file ... No error") al crear otra ventana en el mismo
+        # proceso. Se reintenta SOLO ese error de arranque de Tk, no fallos de lógica.
+        run: uv run pytest tests/gui --reruns 2 --only-rerun "Can't find a usable init.tcl"
+
+  test-macos:
+    # Referencia de desarrollo; no bloquea la publicación. Pendiente: en este runner el
+    # servidor SMTP de prueba no recibe conexiones (localmente en macOS sí funciona).
+    runs-on: macos-latest
+    timeout-minutes: 40
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      - name: Instalar dependencias
+        run: uv sync
+      - name: Tests
+        run: uv run pytest
 
   build:
-    needs: test
+    needs: test-windows
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
