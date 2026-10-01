@@ -9,6 +9,7 @@ from envio_correos.core.journal import Journal
 from envio_correos.devtools.fake_smtp import DEV_PASSWORD, DEV_USER, FakeSmtpServer
 from envio_correos.gui import main_window
 from envio_correos.gui.presenters.base import STEP_ACCOUNT
+from tests.gui.conftest import dump_threads
 from tests.unit.test_credentials import mem  # noqa: F401
 
 pytestmark = pytest.mark.slow
@@ -35,6 +36,7 @@ def drive(script):
             if cond():
                 return
             time.sleep(0.02)
+        dump_threads()
         raise TimeoutError
 
     def run():

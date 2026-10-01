@@ -1,7 +1,14 @@
+import faulthandler
 import os
 import sys
 
 import pytest
+
+
+def dump_threads() -> None:
+    """Al agotarse una espera, vuelca qué hace cada hilo: en CI es la única forma de ver
+    dónde quedó trabado un envío."""
+    faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
 
 
 def _has_display() -> bool:

@@ -16,6 +16,7 @@ from envio_correos.devtools.fake_smtp import DEV_PASSWORD, DEV_USER, FakeSmtpSer
 from envio_correos.gui import main_window
 from envio_correos.gui.presenters import recipients as recipients_presenter
 from tests.fixtures.make_fixtures import make_lista
+from tests.gui.conftest import dump_threads
 
 pytestmark = pytest.mark.slow
 
@@ -55,6 +56,7 @@ def test_recorrido_completo_uno_por_uno(env):
             if cond():
                 return
             time.sleep(0.02)
+        dump_threads()
         raise TimeoutError
 
     def script():
@@ -156,6 +158,7 @@ def test_rechazo_y_dominio_invalido_generan_excel_de_fallidos(env, monkeypatch, 
             if cond():
                 return
             time.sleep(0.02)
+        dump_threads()
         raise TimeoutError
 
     def script():
@@ -230,6 +233,7 @@ def test_corregir_y_reintentar_desde_el_resultado(env, monkeypatch, tmp_path):
             if cond():
                 return
             time.sleep(0.02)
+        dump_threads()
         raise TimeoutError
 
     def send_current(subject=None):
@@ -335,6 +339,7 @@ def test_variables_adjuntos_vista_previa_y_prueba(env, tmp_path):
             if cond():
                 return
             time.sleep(0.02)
+        dump_threads()
         raise TimeoutError
 
     def script():

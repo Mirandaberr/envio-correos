@@ -11,6 +11,7 @@ from envio_correos.core.journal import RecipientState as S
 from envio_correos.devtools.fake_smtp import DEV_PASSWORD, DEV_USER, FakeSmtpServer
 from envio_correos.gui import main_window, os_open
 from envio_correos.gui.presenters import recipients as recipients_presenter
+from tests.gui.conftest import dump_threads
 from tests.gui.test_wizard_e2e import AllDomainsOk
 from tests.integration.engine_helpers import make_campaign
 
@@ -50,6 +51,7 @@ def drive(journal, script):
             if cond():
                 return
             time.sleep(0.02)
+        dump_threads()
         raise TimeoutError
 
     def run():
