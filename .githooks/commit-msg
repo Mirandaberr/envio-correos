@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Versioned in .githooks/ — see .githooks/README.md for how this gets
+# activated. Installed by the conventional-commits-init skill.
+msg_file="$1"
+msg="$(head -1 "$msg_file")"
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_.-]+\))?!?: .{1,}'
+# allow git's own merge/revert commit messages through unchanged
+if echo "$msg" | grep -qE '^(Merge |Revert ")'; then
+  exit 0
+fi
+if ! echo "$msg" | grep -qE "$pattern"; then
+  echo "Commit message doesn't follow Conventional Commits:" >&2
+  echo "  $msg" >&2
+  echo "Expected: type(scope): description — e.g. fix(auth): handle expired token" >&2
+  echo "Types: feat fix docs style refactor perf test build ci chore revert" >&2
+  exit 1
+fi

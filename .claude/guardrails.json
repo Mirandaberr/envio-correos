@@ -1,0 +1,7 @@
+{
+  "stack": "python",
+  "test_command": "uv run pytest -q -m 'not slow'",
+  "coverage_command": "uv run pytest -q -m 'not slow' --cov=envio_correos --cov-branch --cov-report=lcov:.claude/guardrails-coverage.lcov",
+  "crap_threshold": 30,
+  "src_dir": "src/envio_correos"
+}
